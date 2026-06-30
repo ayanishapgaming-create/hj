@@ -1,6 +1,7 @@
 package com.example.basicfabricmod.mixin;
 
 import com.example.basicfabricmod.BasicFabricMod;
+import com.example.basicfabricmod.duck.MultiplayerScreenUiAccessor;
 import com.example.basicfabricmod.servermanager.ui.ServerManagerListWidget;
 import com.example.basicfabricmod.servermanager.ui.controller.FolderDialogController;
 import com.example.basicfabricmod.servermanager.ui.controller.KeyboardController;
