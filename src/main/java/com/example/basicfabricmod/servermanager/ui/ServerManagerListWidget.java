@@ -66,6 +66,11 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
     private final VisibleRowCache visibleRowCache = new VisibleRowCache();
     private final HitTestCache hitTestCache = new HitTestCache();
     private final List<ServerInfo> currentServers = new ArrayList<>();
+    private java.util.function.Consumer<String> onServerSelected;
+
+    public void setOnServerSelected(java.util.function.Consumer<String> listener) {
+        this.onServerSelected = listener;
+    }
 
     public ServerManagerListWidget(MinecraftClient client, MultiplayerScreen screen, int width, int height, int y, int itemHeight, MultiplayerUiState uiState) {
         super(client, width, height, y, itemHeight);
@@ -246,7 +251,9 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
             if (config.isShowNumericalPing() && pingData.pingMs() >= 0) {
                 String pingText = pingData.quality() + " (" + pingData.pingMs() + " ms)";
                 context.drawTextWithShadow(client.textRenderer, pingText, layout.pingTextX(), layout.pingTextY(), 0xAAAAAA);
-                tooltipRegistry.add(new TooltipRegion(layout.pingBarsX(), layout.pingBarsY(), 80, 10, Text.literal("Ping: " + pingData.pingMs() + " ms | " + pingData.quality() + " | Updated: " + pingData.lastUpdatedTime())));
+                String ageText = formatAge(pingData.lastUpdatedTime());
+                String tooltipText = pingData.quality() + " - " + pingData.pingMs() + " ms" + (ageText.isEmpty() ? "" : " (updated " + ageText + ")");
+                tooltipRegistry.add(new TooltipRegion(layout.pingBarsX(), layout.pingBarsY(), 80, 10, Text.literal(tooltipText)));
             }
             hitTestCache.put(uiState.getVisibleRows().indexOf(row), new DropTarget(DropTargetType.BEFORE_SERVER, server.folderId(), server.serverInfo().address, uiState.getVisibleRows().indexOf(row), true));
         }
@@ -287,6 +294,9 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
             }
             if (row.kind() == ManagedRowKind.SERVER && click.button() == 0) {
                 selectionController.click(row.server().serverInfo().address, getVisibleServerAddresses());
+                if (onServerSelected != null) {
+                    onServerSelected.accept(row.server().serverInfo().address);
+                }
                 return true;
             }
             return false;
@@ -390,6 +400,25 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
             } else if (mouseY > getBottom() - margin) {
                 setScrollY(getScrollY() + 10.0);
             }
+        }
+
+        private String formatAge(long lastUpdatedTimeMs) {
+            if (lastUpdatedTimeMs <= 0L) {
+                return "";
+            }
+            long deltaMs = System.currentTimeMillis() - lastUpdatedTimeMs;
+            if (deltaMs < 0L) {
+                deltaMs = 0L;
+            }
+            long seconds = deltaMs / 1000L;
+            if (seconds < 1L) {
+                return "just now";
+            }
+            if (seconds < 60L) {
+                return seconds + "s ago";
+            }
+            long minutes = seconds / 60L;
+            return minutes + "m ago";
         }
 
         private String rowKey() {

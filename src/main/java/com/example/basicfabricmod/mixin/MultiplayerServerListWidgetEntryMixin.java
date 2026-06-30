@@ -3,6 +3,7 @@ package com.example.basicfabricmod.mixin;
 import com.example.basicfabricmod.BasicFabricMod;
 import com.example.basicfabricmod.client.FlagRenderState;
 import com.example.basicfabricmod.client.ServerCountryRenderStore;
+import com.example.basicfabricmod.duck.ServerEntryAccessor;
 import com.example.basicfabricmod.geo.CountryLookupResult;
 import com.example.basicfabricmod.geo.LookupStatus;
 import com.example.basicfabricmod.geo.ServerCountryService;
@@ -20,9 +21,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MultiplayerServerListWidget.ServerEntry.class)
-public abstract class MultiplayerServerListWidgetEntryMixin {
+public abstract class MultiplayerServerListWidgetEntryMixin implements ServerEntryAccessor {
     @Shadow @Final private MinecraftClient client;
     @Shadow @Final private ServerInfo server;
+
+    @Override
+    public ServerInfo basicfabricmod$getServer() {
+        return this.server;
+    }
+
 
     @Unique
     private static final int TEXT_COLOR = 0xFFFFFF;

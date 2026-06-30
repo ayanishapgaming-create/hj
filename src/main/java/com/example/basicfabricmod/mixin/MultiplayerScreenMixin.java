@@ -53,6 +53,7 @@ public abstract class MultiplayerScreenMixin extends Screen implements Multiplay
         }
 
         basicfabricmod$managedList = this.addDrawableChild(new ServerManagerListWidget(this.client, (MultiplayerScreen) (Object) this, this.width, this.height - 92, 58, 36, basicfabricmod$uiState));
+        basicfabricmod$managedList.setOnServerSelected(this::basicfabricmod$mirrorSelection);
         basicfabricmod$refreshManagedList();
     }
 
@@ -121,7 +122,21 @@ public abstract class MultiplayerScreenMixin extends Screen implements Multiplay
         }
         basicfabricmod$managedList.rebuild(servers);
         serverListWidget.visible = false;
-        serverListWidget.active = false;
+    }
+
+    @Unique
+    private void basicfabricmod$mirrorSelection(String address) {
+        if (serverListWidget == null || address == null) {
+            return;
+        }
+        for (MultiplayerServerListWidget.Entry entry : serverListWidget.children()) {
+            if (entry instanceof MultiplayerServerListWidget.ServerEntry serverEntry
+                    && entry instanceof com.example.basicfabricmod.duck.ServerEntryAccessor accessor
+                    && address.equals(accessor.basicfabricmod$getServer().address)) {
+                serverListWidget.setSelected(serverEntry);
+                break;
+            }
+        }
     }
 
     @Unique
