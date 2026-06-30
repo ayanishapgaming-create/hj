@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "folders": [
+    {
+      "id": "survival",
+      "name": "Survival",
+      "icon": "GRASS_BLOCK",
+      "pinned": true,
+      "collapsed": false,
+      "order": 0
+    }
+  ],
+  "bindings": [
+    {
+      "serverAddress": "mc.example.net",
+      "folderId": "survival",
+      "favorite": true,
+      "order": 0
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "basicfabricmod",
+  "version": "${version}",
+  "name": "Basic Fabric Mod",
+  "description": "A starter Fabric mod for Minecraft 1.21.11.",
+  "authors": [
+    "You"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/basicfabricmod/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.example.basicfabricmod.BasicFabricMod"
+    ]
+  },
+  "mixins": [
+    "basicfabricmod.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
