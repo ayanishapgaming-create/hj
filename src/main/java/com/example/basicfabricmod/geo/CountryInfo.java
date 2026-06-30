@@ -7,17 +7,21 @@ import java.util.Objects;
  * Immutable country display data used by the UI and cache.
  */
 public record CountryInfo(String countryCode, String countryName, String flagEmoji) {
-    public static final CountryInfo UNKNOWN = new CountryInfo("XX", "Unknown Location", "🌍");
+    private static final String UNKNOWN_CODE = "XX";
+    private static final String UNKNOWN_NAME = "Unknown Location";
+    private static final String UNKNOWN_FLAG = "🌍";
+
+    public static final CountryInfo UNKNOWN = new CountryInfo(UNKNOWN_CODE, UNKNOWN_NAME, UNKNOWN_FLAG);
 
     public CountryInfo {
         countryCode = normalizeCode(countryCode);
-        countryName = Objects.requireNonNullElse(countryName, UNKNOWN.countryName);
-        flagEmoji = Objects.requireNonNullElse(flagEmoji, UNKNOWN.flagEmoji);
+        countryName = Objects.requireNonNullElse(countryName, UNKNOWN_NAME);
+        flagEmoji = Objects.requireNonNullElse(flagEmoji, UNKNOWN_FLAG);
     }
 
     public static CountryInfo of(String countryCode, String countryName) {
         String normalizedCode = normalizeCode(countryCode);
-        if (normalizedCode.equals(UNKNOWN.countryCode)) {
+        if (normalizedCode.equals(UNKNOWN_CODE)) {
             return UNKNOWN;
         }
         return new CountryInfo(normalizedCode, countryName, toFlagEmoji(normalizedCode));
@@ -25,15 +29,15 @@ public record CountryInfo(String countryCode, String countryName, String flagEmo
 
     private static String normalizeCode(String countryCode) {
         if (countryCode == null || countryCode.isBlank()) {
-            return UNKNOWN.countryCode;
+            return UNKNOWN_CODE;
         }
         String normalized = countryCode.trim().toUpperCase(Locale.ROOT);
-        return normalized.length() == 2 ? normalized : UNKNOWN.countryCode;
+        return normalized.length() == 2 ? normalized : UNKNOWN_CODE;
     }
 
     private static String toFlagEmoji(String countryCode) {
-        if (countryCode.length() != 2 || countryCode.equals(UNKNOWN.countryCode)) {
-            return UNKNOWN.flagEmoji;
+        if (countryCode.length() != 2 || countryCode.equals(UNKNOWN_CODE)) {
+            return UNKNOWN_FLAG;
         }
 
         int first = Character.codePointAt(countryCode, 0) - 'A' + 0x1F1E6;
