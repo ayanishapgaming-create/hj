@@ -80,32 +80,38 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
     }
 
     public void rebuild(List<ServerInfo> servers) {
-        currentServers.clear();
-        currentServers.addAll(servers);
-        ServerManagerViewModel model = ServerFolderManager.getInstance().buildViewModel(servers, uiState.getSearchQuery());
-        List<ManagedRowData> rows = new ArrayList<>();
-        rows.add(ManagedRowData.root("Servers", model.rootServers().size()));
-        for (ServerEntryViewModel rootServer : model.rootServers()) {
-            rows.add(ManagedRowData.server(rootServer));
-        }
-        for (FolderViewModel folder : model.folders()) {
-            rows.add(ManagedRowData.folder(folder.folder(), folder.visibleServerCount()));
-            boolean expanded = model.searching() || !folder.folder().isCollapsed();
-            float expansion = animationController.getExpansion(folder.folder().getId(), expanded, BasicFabricMod.getConfig().isExpandAnimations() && MinecraftClient.getInstance().getCurrentFps() > 20);
-            if (expanded || expansion > 0.0F) {
-                for (ServerEntryViewModel server : folder.servers()) {
-                    rows.add(ManagedRowData.server(server));
+        try {
+            currentServers.clear();
+            currentServers.addAll(servers);
+            ServerManagerViewModel model = ServerFolderManager.getInstance().buildViewModel(servers, uiState.getSearchQuery());
+            List<ManagedRowData> rows = new ArrayList<>();
+            rows.add(ManagedRowData.root("Servers", model.rootServers().size()));
+            for (ServerEntryViewModel rootServer : model.rootServers()) {
+                rows.add(ManagedRowData.server(rootServer));
+            }
+            for (FolderViewModel folder : model.folders()) {
+                rows.add(ManagedRowData.folder(folder.folder(), folder.visibleServerCount()));
+                boolean expanded = model.searching() || !folder.folder().isCollapsed();
+                float expansion = animationController.getExpansion(folder.folder().getId(), expanded, BasicFabricMod.getConfig().isExpandAnimations() && MinecraftClient.getInstance().getCurrentFps() > 20);
+                if (expanded || expansion > 0.0F) {
+                    for (ServerEntryViewModel server : folder.servers()) {
+                        rows.add(ManagedRowData.server(server));
+                    }
                 }
             }
-        }
-        uiState.replaceRows(rows);
-        boolean changed = visibleRowCache.update(rows);
-        if (changed) {
-            List<Entry> entries = new ArrayList<>(rows.size());
-            for (ManagedRowData row : rows) {
-                entries.add(new Entry(row));
+            uiState.replaceRows(rows);
+            boolean changed = visibleRowCache.update(rows);
+            if (changed) {
+                List<Entry> entries = new ArrayList<>(rows.size());
+                for (ManagedRowData row : rows) {
+                    entries.add(new Entry(row));
+                }
+                replaceEntries(entries);
             }
-            replaceEntries(entries);
+            BasicFabricMod.LOGGER.info("[ServerManager+] rebuild: {} input servers -> {} rows ({} root, {} folders)",
+                    servers.size(), rows.size(), model.rootServers().size(), model.folders().size());
+        } catch (Throwable t) {
+            BasicFabricMod.LOGGER.error("[ServerManager+] rebuild() failed with {} input servers", servers.size(), t);
         }
     }
 
@@ -162,20 +168,26 @@ public final class ServerManagerListWidget extends AlwaysSelectedEntryListWidget
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
-            int x = getX();
-            int y = getY();
-            int width = getWidth();
-            int height = getHeight();
-            RowLayout layout = layoutEngine.getLayout(x, y, width, height, row.kind() != ManagedRowKind.SERVER,
-                    row.server() != null && row.server().favorite(), row.folder() != null && row.folder().isPinned(), client.textRenderer);
-            float hoverStrength = hoverAnimations.update(rowKey(), hovered, BasicFabricMod.getConfig().isHoverAnimations());
-            renderBackground(context, layout, hovered, hoverStrength);
-            switch (row.kind()) {
-                case ROOT -> renderRootRow(context, layout);
-                case FOLDER -> renderFolderRow(context, layout, hovered);
-                case SERVER -> renderServerRow(context, layout, hovered);
+            try {
+                int x = getX();
+                int y = getY();
+                int width = getWidth();
+                int height = getHeight();
+                RowLayout layout = layoutEngine.getLayout(x, y, width, height, row.kind() != ManagedRowKind.SERVER,
+                        row.server() != null && row.server().favorite(), row.folder() != null && row.folder().isPinned(), client.textRenderer);
+                float hoverStrength = hoverAnimations.update(rowKey(), hovered, BasicFabricMod.getConfig().isHoverAnimations());
+                renderBackground(context, layout, hovered, hoverStrength);
+                switch (row.kind()) {
+                    case ROOT -> renderRootRow(context, layout);
+                    case FOLDER -> renderFolderRow(context, layout, hovered);
+                    case SERVER -> renderServerRow(context, layout, hovered);
+                }
+                renderDragFeedback(context, layout);
+            } catch (Throwable t) {
+                BasicFabricMod.LOGGER.error("[ServerManager+] Failed to render row kind={}", row.kind(), t);
+                context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0x66FF0000);
+                context.drawTextWithShadow(client.textRenderer, "render error: " + t.getClass().getSimpleName(), getX() + 4, getY() + 2, 0xFFFFFF);
             }
-            renderDragFeedback(context, layout);
         }
 
         private void renderBackground(DrawContext context, RowLayout layout, boolean hovered, float hoverStrength) {

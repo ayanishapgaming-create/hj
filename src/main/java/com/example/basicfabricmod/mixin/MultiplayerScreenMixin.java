@@ -43,18 +43,23 @@ public abstract class MultiplayerScreenMixin extends Screen implements Multiplay
 
     @Inject(method = "init", at = @At("TAIL"))
     private void basicfabricmod$initEnhancedUi(CallbackInfo ci) {
-        if (BasicFabricMod.getConfig().isShowSearchBar()) {
-            basicfabricmod$searchField = this.addDrawableChild(new TextFieldWidget(this.textRenderer, this.width / 2 - 110, 32, 220, 20, Text.literal("Search")));
-            basicfabricmod$searchField.setMaxLength(100);
-            basicfabricmod$searchField.setChangedListener(value -> {
-                basicfabricmod$uiState.setSearchQuery(value);
-                basicfabricmod$refreshManagedList();
-            });
-        }
+        try {
+            if (BasicFabricMod.getConfig().isShowSearchBar()) {
+                basicfabricmod$searchField = this.addDrawableChild(new TextFieldWidget(this.textRenderer, this.width / 2 - 110, 32, 220, 20, Text.literal("Search")));
+                basicfabricmod$searchField.setMaxLength(100);
+                basicfabricmod$searchField.setChangedListener(value -> {
+                    basicfabricmod$uiState.setSearchQuery(value);
+                    basicfabricmod$refreshManagedList();
+                });
+            }
 
-        basicfabricmod$managedList = this.addDrawableChild(new ServerManagerListWidget(this.client, (MultiplayerScreen) (Object) this, this.width, this.height - 92, 58, 36, basicfabricmod$uiState));
-        basicfabricmod$managedList.setOnServerSelected(this::basicfabricmod$mirrorSelection);
-        basicfabricmod$refreshManagedList();
+            basicfabricmod$managedList = this.addDrawableChild(new ServerManagerListWidget(this.client, (MultiplayerScreen) (Object) this, this.width, this.height - 92, 58, 36, basicfabricmod$uiState));
+            basicfabricmod$managedList.setOnServerSelected(this::basicfabricmod$mirrorSelection);
+            basicfabricmod$refreshManagedList();
+            BasicFabricMod.LOGGER.info("[ServerManager+] MultiplayerScreen init complete, screen size {}x{}", this.width, this.height);
+        } catch (Throwable t) {
+            BasicFabricMod.LOGGER.error("[ServerManager+] MultiplayerScreen init failed", t);
+        }
     }
 
     @Override
@@ -114,14 +119,20 @@ public abstract class MultiplayerScreenMixin extends Screen implements Multiplay
     @Unique
     private void basicfabricmod$refreshManagedList() {
         if (basicfabricmod$managedList == null || serverList == null) {
+            BasicFabricMod.LOGGER.warn("[ServerManager+] refreshManagedList skipped: managedList={}, serverList={}",
+                    basicfabricmod$managedList != null, serverList != null);
             return;
         }
-        List<net.minecraft.client.network.ServerInfo> servers = new ArrayList<>();
-        for (int i = 0; i < serverList.size(); i++) {
-            servers.add(serverList.get(i));
+        try {
+            List<net.minecraft.client.network.ServerInfo> servers = new ArrayList<>();
+            for (int i = 0; i < serverList.size(); i++) {
+                servers.add(serverList.get(i));
+            }
+            basicfabricmod$managedList.rebuild(servers);
+            serverListWidget.visible = false;
+        } catch (Throwable t) {
+            BasicFabricMod.LOGGER.error("[ServerManager+] refreshManagedList failed", t);
         }
-        basicfabricmod$managedList.rebuild(servers);
-        serverListWidget.visible = false;
     }
 
     @Unique
